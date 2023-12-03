@@ -91,11 +91,11 @@ public:
 			int id = 0;
 			transaction tx{ *c };
 
-			auto collection = tx.query<int>("SELECT client.id FROM client WHERE firstname like '" + fname + "' and lastname like '" + lname + "' and email like '" + email + "'");
+			auto collection = tx.query<int>("SELECT client.id FROM client WHERE firstname like '" + tx.esc(fname) + "' and lastname like '" + tx.esc(lname) + "' and email like '" + tx.esc(email) + "'");
 			for (auto& record : collection) id = get<0>(record);
 			if (!id)
 			{
-				sql = "INSERT INTO public.client (id, firstname, lastname, email) VALUES(nextval('client_id_seq'::regclass), '" + fname + "', '" + lname + "', '" + email + "');";
+				sql = "INSERT INTO public.client (id, firstname, lastname, email) VALUES(nextval('client_id_seq'::regclass), '" + tx.esc(fname) + "', '" + tx.esc(lname) + "', '" + tx.esc(email) + "');";
 				tx.exec(sql);
 				tx.commit();
 			}
@@ -114,11 +114,11 @@ public:
 			string str = "";
 			int id = 0;
 			transaction tx{ *c };
-			auto collection = tx.query<string>("SELECT number FROM phone WHERE number = '" + phone + "'");
+			auto collection = tx.query<string>("SELECT number FROM phone WHERE number = '" + tx.esc(phone) + "'");
 			for (auto& record : collection) str = get<0>(record);
 			if (str != phone)
 			{
-				sql = "INSERT INTO public.phone (id, number) VALUES(nextval('phone_id_seq'::regclass), '" + phone + "') RETURNING id;";
+				sql = "INSERT INTO public.phone (id, number) VALUES(nextval('phone_id_seq'::regclass), '" + tx.esc(phone) + "') RETURNING id;";
 				result r = tx.exec(sql);
 				if (r.size() == 1)
 				{
@@ -160,7 +160,7 @@ public:
 					sql += "email='";
 					break;
 				}
-				sql += data + "' WHERE id='" + to_string(id) + "'";
+				sql += tx.esc(data) + "' WHERE id='" + to_string(id) + "'";
 				tx.exec(sql);
 				tx.commit();
 			}
@@ -178,7 +178,7 @@ public:
 		{
 			int id = 0;
 			transaction tx{ *c };
-			auto collection = tx.query<int>("SELECT phone.id FROM public.phone WHERE number = '" + phone + "'");
+			auto collection = tx.query<int>("SELECT phone.id FROM public.phone WHERE number = '" + tx.esc(phone) + "'");
 			for (auto& record : collection) id = get<0>(record);
 			sql = "DELETE FROM public.clientphone  WHERE phone_id='" + to_string(id) + "'";
 			tx.exec(sql);
@@ -225,11 +225,11 @@ public:
 		try
 		{
 			transaction tx{ *c };
-			auto collection = tx.query<int>("SELECT client.id FROM public.client WHERE firstname like '" + fname + "' and lastname like '" + lname + "' and email like '" + email + "'");
+			auto collection = tx.query<int>("SELECT client.id FROM public.client WHERE firstname like '" + tx.esc(fname) + "' and lastname like '" + tx.esc(lname) + "' and email like '" + tx.esc(email) + "'");
 			for (auto& record : collection) id = get<0>(record);
 			if (id < 0)
 			{
-				auto collection = tx.query<int>("SELECT phone.id FROM public.phone WHERE number like '" + phone + "'");
+				auto collection = tx.query<int>("SELECT phone.id FROM public.phone WHERE number like '" + tx.esc(phone) + "'");
 				for (auto& record : collection) id = get<0>(record);
 				if (id > 0)
 				{
